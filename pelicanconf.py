@@ -22,10 +22,10 @@ AUTHOR_FEED_RSS = None
 LINKS = ()
 
 DISPLAY_CATEGORIES_ON_MENU=False
-MENUITEMS = (('CTFs', '/category/ctfs.html'),
-             ('Categories', '/categories.html'),
-             ('Tags', '/tags.html'),
-             ('Authors', '/authors.html'),)
+MENUITEMS = (('CTFs', '/CtfWriteups/category/ctfs.html'),
+             ('Categories', '/CtfWriteups/categories.html'),
+             ('Tags', '/CtfWriteups/tags.html'),
+             ('Authors', '/CtfWriteups/authors.html'),)
 
 # Social widget
 SOCIAL = ()
