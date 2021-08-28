@@ -160,7 +160,7 @@ The get_result() function creates a copy of the skeleton directory containing th
 
 The challenge here seems to be easy at first as we just need to place the correct rust code inside of one of the &lt;templ&gt; tags in the uploaded file to open and read the flag.txt file:
 
-    html:::
+    :::html
     <html>
     <title><templ>fs::read_to_string("/flag.txt").unwrap()</templ></title>
     <h1><templ>"bruh".to_string()</templ></h1>
@@ -168,7 +168,7 @@ The challenge here seems to be easy at first as we just need to place the correc
 
 However this attempt fails because the rust application uses the seccomp library to limit the system calls that are allowed to do:
 
-    rust:::
+    :::rust
     use seccomp::*;
     
     ...
@@ -190,7 +190,7 @@ However this attempt fails because the rust application uses the seccomp library
 
 By looking at the beginning of the rust_template variable we can see that the seccomp namespace is not imported but only its contents. This gives us the chance to create the same classes as provided by the lib.rs but with manipulated behaviour. By injecting our own manipulated "Context" class into the uploaded file we can prevent the rust application from applying the seccomp rules into the kernel:
 
-    html:::
+    :::html
     <html>
     <title><templ>fs::read_to_string("/flag.txt").unwrap()</templ></title>
     <h1><templ>
