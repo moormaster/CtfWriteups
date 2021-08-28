@@ -21,6 +21,12 @@ AUTHOR_FEED_RSS = None
 # Blogroll
 LINKS = ()
 
+DISPLAY_CATEGORIES_ON_MENU=False
+MENUITEMS = (('CTFs', '/category/ctfs.html'),
+             ('Categories', '/categories.html'),
+             ('Tags', '/tags.html'),
+             ('Authors', '/authors.html'),)
+
 # Social widget
 SOCIAL = ()
 
