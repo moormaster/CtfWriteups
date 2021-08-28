@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <title>Emojibook</title>
+        <link rel="stylesheet" href="https://moormaster.github.io/CtfWriteups/theme/css/main.css" />
+        <link href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="CTF writeups Atom Feed" />
+        <meta name="description" content="We are presented are django app which allows us to store text notes that can contain special placeholders which will be replaced by emoji images..." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://moormaster.github.io/CtfWriteups/">CTF writeups</a></h1>
+                <nav><ul>
+                    <li><a href="https://moormaster.github.io/CtfWriteups/category/ctfs.html">CTFs</a></li>
+                    <li><a href="https://moormaster.github.io/CtfWriteups/category/rarctf-2021-capture-the-flag.html">RaRCTF 2021 Capture The Flag</a></li>
+                    <li class="active"><a href="https://moormaster.github.io/CtfWriteups/category/really-awesome-ctf-2021.html">Really Awesome CTF 2021</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="https://moormaster.github.io/CtfWriteups/emojibook.html" rel="bookmark"
+           title="Permalink to Emojibook">Emojibook</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2021-08-15T00:00:00+02:00">
+                Published: So 15 August 2021
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://moormaster.github.io/CtfWriteups/author/moormastergmxnet.html">moormaster@gmx.net</a>
+        </address>
+<p>In <a href="https://moormaster.github.io/CtfWriteups/category/really-awesome-ctf-2021.html">Really Awesome CTF 2021</a>.</p>
+
+</footer><!-- /.post-info -->      <p>We are presented are django app which allows us to store text notes that can contain special placeholders which will be replaced by emoji images after uploading the note. For example</p>
+<div class="highlight"><pre><span></span><code>:grinning_face:
+</code></pre></div>
+
+<p>will be resolved to an image file name 1F600.png. The possible emoji keys that can be used are specified by the emoj.json file.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+    <span class="s2">&quot;grinning_face&quot;</span><span class="o">:</span> <span class="s2">&quot;1F600&quot;</span><span class="p">,</span> 
+    <span class="s2">&quot;grinning_face_with_big_eyes&quot;</span><span class="o">:</span> <span class="s2">&quot;1F603&quot;</span><span class="p">,</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>By looking at the forms.py file we can see that before a note gets saved into the database the emoji keys will already be replaced by special place holders containing the file name of the image.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">NoteCreateForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">NoteCreateForm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">commit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;{{&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;}}&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;emoji.json&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">emoji_file</span><span class="p">:</span>
+            <span class="n">emojis</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">emoji_file</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">emoji</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;(:[a-z_]*?:)&quot;</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">body</span><span class="p">):</span>
+                <span class="n">instance</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">emoji</span><span class="p">,</span> <span class="s2">&quot;{{&quot;</span> <span class="o">+</span> <span class="n">emojis</span><span class="p">[</span><span class="n">emoji</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)]</span> <span class="o">+</span> <span class="s2">&quot;.png}}&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">commit</span><span class="p">:</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_m2m</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">instance</span>
+</code></pre></div>
+
+<p>So a note containing only the grinning_face emoji will be stored as:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">{{</span><span class="m">1F600.</span><span class="nv">png</span><span class="cp">}}</span><span class="x"></span>
+</code></pre></div>
+
+<p>What we also see in the forms.py is an attempt to prevent the user from manually entering the internally used placeholders.</p>
+<div class="highlight"><pre><span></span><code><span class="n">instance</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;{{&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;}}&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>But this mechanism can be tricked if we would enter something like this in a note:</p>
+<div class="highlight"><pre><span></span><code>{}}{/flag.txt}..}
+</code></pre></div>
+
+<p>After the replacements of {{, }} and .. happened the result still would be a note containig a placeholder in the internal format pointing to the file containing the flag:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">{{</span><span class="o">/</span><span class="nv">flag.txt</span><span class="cp">}}</span><span class="x"></span>
+</code></pre></div>
+
+<p>If we open the note again in the browser we will see an image that cannot be displayed. A quick look at the views.py reveals why:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">view_note</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">HttpRequest</span><span class="p">,</span> <span class="n">pk</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HttpResponse</span><span class="p">:</span>
+    <span class="n">note</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Note</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">note</span><span class="o">.</span><span class="n">body</span>
+    <span class="k">for</span> <span class="n">include</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;({{.*?}})&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">include</span><span class="p">)</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;emoji&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">include</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">include</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;&lt;img src=</span><span class="se">\&quot;</span><span class="s2">data:image/png;base64,</span><span class="si">{</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;latin1&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> width=</span><span class="se">\&quot;</span><span class="s2">25</span><span class="se">\&quot;</span><span class="s2"> height=</span><span class="se">\&quot;</span><span class="s2">25</span><span class="se">\&quot;</span><span class="s2"> /&gt;&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s2">&quot;note.html&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;note&quot;</span><span class="p">:</span> <span class="n">note</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">})</span>
+</code></pre></div>
+
+<p>The internal placeholders are replaced with an img tag that contains the image data in base64 format - or in our case the flag. All that is left to do is to look at the source code within the web browser, find that base64 string and decode it to get the flag.</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <title>Military Grade</title>
+        <link rel="stylesheet" href="https://moormaster.github.io/CtfWriteups/theme/css/main.css" />
+        <link href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="CTF writeups Atom Feed" />
+        <meta name="description" content="We are presented with a simple webservice written in go which randomly changes the encryption key every 672 ms and outputs the encrypted flag...." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://moormaster.github.io/CtfWriteups/">CTF writeups</a></h1>
+                <nav><ul>
+                    <li><a href="https://moormaster.github.io/CtfWriteups/category/ctfs.html">CTFs</a></li>
+                    <li><a href="https://moormaster.github.io/CtfWriteups/category/rarctf-2021-capture-the-flag.html">RaRCTF 2021 Capture The Flag</a></li>
+                    <li class="active"><a href="https://moormaster.github.io/CtfWriteups/category/really-awesome-ctf-2021.html">Really Awesome CTF 2021</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="https://moormaster.github.io/CtfWriteups/military-grade.html" rel="bookmark"
+           title="Permalink to Military Grade">Military Grade</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2021-08-15T00:00:00+02:00">
+                Published: So 15 August 2021
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://moormaster.github.io/CtfWriteups/author/moormastergmxnet.html">moormaster@gmx.net</a>
+        </address>
+<p>In <a href="https://moormaster.github.io/CtfWriteups/category/really-awesome-ctf-2021.html">Really Awesome CTF 2021</a>.</p>
+
+</footer><!-- /.post-info -->      <p>We are presented with a simple webservice written in go which randomly changes the encryption key every 672 ms and outputs the encrypted flag. However if we analyze the seed that is used to initialize the random number generator ...</p>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span> <span class="nx">changer</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">ticker</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nx">NewTicker</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span> <span class="o">*</span> <span class="mi">672</span><span class="p">).</span><span class="nx">C</span>
+    <span class="k">for</span> <span class="k">range</span> <span class="nx">ticker</span> <span class="p">{</span>
+        <span class="nx">rand</span><span class="p">.</span><span class="nx">Seed</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">UnixNano</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">^</span><span class="mh">0x7FFFFFFFFEFFF000</span><span class="p">)</span>
+
+        <span class="o">...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>... we find out that there are only 13 bits that are chosen randomly in the changer() function.</p>
+<div class="highlight"><pre><span></span><code><span class="o">^</span><span class="mh">0x7FFFFFFFFEFFF000</span>
+<span class="o">-&gt;</span> <span class="o">^</span><span class="mo">0111</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1110</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0000</span>
+<span class="o">-&gt;</span>  <span class="mi">1000</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0001</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mo">0000</span> <span class="mi">1111</span> <span class="mi">1111</span> <span class="mi">1111</span>
+    <span class="o">^</span>                                               <span class="o">^</span>                <span class="o">^</span>
+    <span class="mi">63</span> <span class="n">th</span> <span class="n">bit</span> <span class="o">-</span> <span class="n">sign</span>                                <span class="o">|</span>                <span class="o">|</span>
+                                                    <span class="mi">24</span> <span class="n">th</span> <span class="n">bit</span>        <span class="o">|</span>
+                                                                     <span class="mi">12</span> <span class="n">bit</span> <span class="n">number</span>
+</code></pre></div>
+
+<p>So we can simply bruteforce all possible seeds to create "random" encryption keys the same way as the main.go file until the output of the webservice decodes to something that starts with "ractf{".</p>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&quot;bytes&quot;</span>
+    <span class="s">&quot;crypto/aes&quot;</span>
+    <span class="s">&quot;crypto/cipher&quot;</span>
+    <span class="s">&quot;encoding/hex&quot;</span>
+    <span class="s">&quot;fmt&quot;</span>
+    <span class="s">&quot;log&quot;</span>
+    <span class="s">&quot;math/rand&quot;</span>
+    <span class="s">&quot;net/http&quot;</span>
+    <span class="s">&quot;os&quot;</span>
+    <span class="s">&quot;strings&quot;</span>
+    <span class="s">&quot;sync&quot;</span>
+    <span class="s">&quot;time&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">const</span> <span class="nx">rawFlag</span> <span class="p">=</span> <span class="s">&quot;[REDACTED]&quot;</span>
+
+<span class="kd">var</span> <span class="nx">flag</span> <span class="kt">string</span>
+<span class="kd">var</span> <span class="nx">flagmu</span> <span class="nx">sync</span><span class="p">.</span><span class="nx">Mutex</span>
+
+<span class="kd">func</span> <span class="nx">decrypt</span><span class="p">(</span><span class="nx">ciphertextHex</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">bKey</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">,</span> <span class="nx">blockSize</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+    <span class="nx">ciphertext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">hex</span><span class="p">.</span><span class="nx">DecodeString</span><span class="p">(</span><span class="nx">ciphertextHex</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;&quot;</span>
+    <span class="p">}</span>
+
+    <span class="nx">bIV</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">ciphertext</span><span class="p">)[:</span><span class="nx">blockSize</span><span class="p">]</span>
+    <span class="nx">bCiphertext</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">ciphertext</span><span class="p">)[</span><span class="nx">blockSize</span><span class="p">:]</span>
+    <span class="nx">block</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">aes</span><span class="p">.</span><span class="nx">NewCipher</span><span class="p">(</span><span class="nx">bKey</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;&quot;</span>
+    <span class="p">}</span>
+
+    <span class="nx">plaintext</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="kt">byte</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">bCiphertext</span><span class="p">))</span>
+    <span class="nx">mode</span> <span class="o">:=</span> <span class="nx">cipher</span><span class="p">.</span><span class="nx">NewCBCDecrypter</span><span class="p">(</span><span class="nx">block</span><span class="p">,</span> <span class="nx">bIV</span><span class="p">)</span>
+    <span class="nx">mode</span><span class="p">.</span><span class="nx">CryptBlocks</span><span class="p">(</span><span class="nx">plaintext</span><span class="p">,</span> <span class="nx">bCiphertext</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">string</span><span class="p">(</span><span class="nx">plaintext</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">key</span> <span class="p">[]</span><span class="kt">byte</span>
+    <span class="kd">var</span> <span class="nx">iv</span> <span class="p">[]</span><span class="kt">byte</span>
+
+    <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="mi">32</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+        <span class="nx">key</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nb">byte</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">aes</span><span class="p">.</span><span class="nx">BlockSize</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+        <span class="nx">iv</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">iv</span><span class="p">,</span> <span class="nb">byte</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Args</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;No ciphertext given -&gt; Ending now&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="p">}</span>
+
+    <span class="nx">ciphertextWithoutIV</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nx">Args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;Decrypting &quot;</span><span class="o">+</span> <span class="nx">ciphertextWithoutIV</span><span class="p">)</span>
+
+    <span class="c1">// iterate twice over the 12 bit number range</span>
+    <span class="c1">// first with bit 24 set to 0</span>
+    <span class="c1">// second with bit 24 set to 1</span>
+    <span class="k">for</span> <span class="nx">flipBit24</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">flipBit24</span> <span class="p">&lt;</span> <span class="mi">2</span><span class="p">;</span> <span class="nx">flipBit24</span><span class="o">++</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="nx">j</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="p">&lt;</span> <span class="p">(</span><span class="mi">1</span><span class="o">&lt;&lt;</span><span class="mi">12</span><span class="p">);</span> <span class="nx">j</span><span class="o">++</span> <span class="p">{</span>
+            <span class="nx">seed</span> <span class="o">:=</span> <span class="nb">int64</span><span class="p">(</span><span class="nx">j</span><span class="p">);</span>
+            <span class="k">if</span> <span class="nx">flipBit24</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+                <span class="nx">seed</span> <span class="o">|=</span> <span class="nb">int64</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="mi">24</span>
+            <span class="p">}</span>
+
+            <span class="nx">rand</span><span class="p">.</span><span class="nx">Seed</span><span class="p">(</span><span class="nx">seed</span><span class="p">)</span>
+            <span class="k">for</span> <span class="nx">k</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">k</span> <span class="p">&lt;</span> <span class="nx">rand</span><span class="p">.</span><span class="nx">Intn</span><span class="p">(</span><span class="mi">32</span><span class="p">);</span> <span class="nx">k</span><span class="o">++</span> <span class="p">{</span>
+                <span class="nx">rand</span><span class="p">.</span><span class="nx">Seed</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Int63</span><span class="p">())</span>
+            <span class="p">}</span>
+
+            <span class="kd">var</span> <span class="nx">key</span> <span class="p">[]</span><span class="kt">byte</span>
+            <span class="kd">var</span> <span class="nx">iv</span> <span class="p">[]</span><span class="kt">byte</span>
+
+            <span class="k">for</span> <span class="nx">k</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">k</span> <span class="p">&lt;</span> <span class="mi">32</span><span class="p">;</span> <span class="nx">k</span><span class="o">++</span> <span class="p">{</span>
+                <span class="nx">key</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nb">byte</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Intn</span><span class="p">(</span><span class="mi">255</span><span class="p">)))</span>
+            <span class="p">}</span>
+
+            <span class="k">for</span> <span class="nx">k</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">k</span> <span class="p">&lt;</span> <span class="nx">aes</span><span class="p">.</span><span class="nx">BlockSize</span><span class="p">;</span> <span class="nx">k</span><span class="o">++</span> <span class="p">{</span>
+                <span class="nx">iv</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">iv</span><span class="p">,</span> <span class="nb">byte</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nx">Intn</span><span class="p">(</span><span class="mi">255</span><span class="p">)))</span>
+            <span class="p">}</span>
+
+            <span class="nx">ciphertext</span> <span class="p">=</span> <span class="nx">hex</span><span class="p">.</span><span class="nx">EncodeToString</span><span class="p">(</span><span class="nx">iv</span><span class="p">)</span> <span class="o">+</span> <span class="nx">ciphertextWithoutIV</span>
+
+            <span class="nx">plaintext</span> <span class="p">=</span> <span class="nx">decrypt</span><span class="p">(</span><span class="nx">ciphertext</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">aes</span><span class="p">.</span><span class="nx">BlockSize</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Index</span><span class="p">(</span><span class="nx">plaintext</span><span class="p">,</span> <span class="s">&quot;ractf{&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Index</span><span class="p">(</span><span class="nx">plaintext</span><span class="p">,</span> <span class="s">&quot;[REDACTED]&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+                <span class="nb">print</span><span class="p">(</span><span class="nx">plaintext</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

