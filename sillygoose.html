@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="generator" content="Pelican" />
+        <title>SillyGoose</title>
+        <link rel="stylesheet" href="https://moormaster.github.io/CtfWriteups/theme/css/main.css" />
+        <link href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="CTF writeups Atom Feed" />
+        <meta name="description" content="Simple binary search number guessing game. You guess a number and the challenge tells you whether the goal is lower or higher. import sys..." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://moormaster.github.io/CtfWriteups/">CTF writeups</a></h1>
+                <nav><ul>
+                    <li><a href="/CtfWriteups/category/ctfs.html">CTFs</a></li>
+                    <li><a href="/CtfWriteups/categories.html">Categories</a></li>
+                    <li><a href="/CtfWriteups/tags.html">Tags</a></li>
+                    <li><a href="/CtfWriteups/authors.html">Authors</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="https://moormaster.github.io/CtfWriteups/sillygoose.html" rel="bookmark"
+           title="Permalink to SillyGoose">SillyGoose</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2024-08-04T00:00:00+02:00">
+                Published: So 04 August 2024
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://moormaster.github.io/CtfWriteups/author/moormastergmxnet.html">moormaster@gmx.net</a>
+        </address>
+<p>In <a href="https://moormaster.github.io/CtfWriteups/category/n00bzctf-2024.html">N00bzCtf 2024</a>.</p>
+
+</footer><!-- /.post-info -->      <p>Simple binary search number guessing game. You guess a number and the challenge tells you whether the goal is lower or higher.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">lower_bound</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">upper_bound</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;sillygoose.log&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+
+<span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">while</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+    <span class="n">attempt</span> <span class="o">=</span> <span class="n">lower_bound</span> <span class="o">+</span> <span class="p">(</span><span class="n">upper_bound</span> <span class="o">-</span> <span class="n">lower_bound</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">attempt</span><span class="p">))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">attempt</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">answer</span> <span class="o">=</span> <span class="nb">input</span><span class="p">()</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt; &quot;</span> <span class="o">+</span> <span class="n">answer</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;too small&quot;</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">:</span>
+        <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">attempt</span>
+        <span class="k">continue</span>
+    <span class="k">if</span> <span class="s2">&quot;too large&quot;</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">:</span>
+        <span class="n">upper_bound</span> <span class="o">=</span> <span class="n">attempt</span>
+        <span class="k">continue</span>
+    <span class="k">break</span>
+
+<span class="n">flag</span> <span class="o">=</span> <span class="nb">input</span><span class="p">()</span>
+<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt; &quot;</span> <span class="o">+</span> <span class="n">flag</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;yay&quot;</span><span class="p">)</span>
+<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&gt; yay</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a rel="nofollow" href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a rel="nofollow" href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a rel="nofollow" href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

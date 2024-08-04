@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="generator" content="Pelican" />
+        <title>Numbers2</title>
+        <link rel="stylesheet" href="https://moormaster.github.io/CtfWriteups/theme/css/main.css" />
+        <link href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="CTF writeups Atom Feed" />
+        <meta name="description" content="Numbers2 is the successor of an older challenge presented at N00bzCtf 2023 with a few differences: It outputs and additional welcome message It..." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://moormaster.github.io/CtfWriteups/">CTF writeups</a></h1>
+                <nav><ul>
+                    <li><a href="/CtfWriteups/category/ctfs.html">CTFs</a></li>
+                    <li><a href="/CtfWriteups/categories.html">Categories</a></li>
+                    <li><a href="/CtfWriteups/tags.html">Tags</a></li>
+                    <li><a href="/CtfWriteups/authors.html">Authors</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="https://moormaster.github.io/CtfWriteups/numbers2.html" rel="bookmark"
+           title="Permalink to Numbers2">Numbers2</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2024-08-04T00:00:00+02:00">
+                Published: So 04 August 2024
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://moormaster.github.io/CtfWriteups/author/moormastergmxnet.html">moormaster@gmx.net</a>
+        </address>
+<p>In <a href="https://moormaster.github.io/CtfWriteups/category/n00bzctf-2024.html">N00bzCtf 2024</a>.</p>
+
+</footer><!-- /.post-info -->      <p>Numbers2 is the successor of an older challenge presented at <a href="https://github.com/n00bzUnit3d/n00bzCTF2023-OfficalWriteups/tree/master/Misc/Numbers">N00bzCtf 2023</a> with a few differences:</p>
+<ul>
+<li>It outputs and additional welcome message</li>
+<li>It asks for three different challenge questions</li>
+<li>successful solving attempts are being answered with different responses</li>
+</ul>
+<p>We have to solve several programming challenges here:</p>
+<ol>
+<li>Challenge inputs do not end on EOL but on ': ' instead. So we cannot simply use the <code>input()</code> function to read the questions from stdin</li>
+<li>We have to parse two integers from within a line of text</li>
+<li>Questions for the least common multiple or the greatest common divisor can be answered using the builtin methods from the math module <code>math.lcm()</code> / <code>math.gcd()</code>. But to answer the question asking for the largest prime factor we must implement an algorithm or an appropriate library from pip must be used</li>
+</ol>
+<p><code>1.</code> can easily be achieved using the <code>re.findall()</code> method:</p>
+<div class="highlight"><pre><span></span><code><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\d+&#39;</span><span class="p">,</span> <span class="s2">&quot;Give me the greatest prime factor of 42&quot;</span><span class="p">)</span>
+<span class="c1"># x = 42</span>
+
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\d+&#39;</span><span class="p">,</span> <span class="s2">&quot;Give me the least common multiple of 42 and 23&quot;</span><span class="p">)</span>
+<span class="c1"># x = &quot;42&quot;</span>
+<span class="c1"># x = &quot;23&quot;</span>
+</code></pre></div>
+
+<p>To solve <code>2.</code> we need to write an own implementation of an input method that stops reading single characters once it sees a ':'. We simply call <code>sys.stdin.read(1)</code> in a loop and decide whether to continue reading chars or not.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">input_until_char</span><span class="p">(</span><span class="n">sep</span><span class="p">):</span>
+    <span class="n">input_read</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">input_read</span> <span class="o">+=</span> <span class="n">c</span>
+    <span class="k">while</span> <span class="n">c</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="ow">and</span> <span class="n">c</span> <span class="o">!=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="ow">and</span> <span class="n">c</span> <span class="o">!=</span> <span class="n">sep</span><span class="p">:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">input_read</span> <span class="o">+=</span> <span class="n">c</span>
+    <span class="k">return</span> <span class="n">input_read</span>
+</code></pre></div>
+
+<p>For <code>3.</code> a naive implementation of using a loop over all prime factor candidates to find out whether a candidate factor is prime is fast enough to find the largest prime factor:</p>
+<div class="highlight"><pre><span></span><code><span class="n">largest_prime_factor</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">is_prime</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">factor</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">n</span><span class="o">%</span><span class="n">factor</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">is_prime</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="n">is_prime</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">%</span><span class="n">n</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">largest_prime_factor</span><span class="p">:</span>
+        <span class="n">largest_prime_factor</span> <span class="o">=</span> <span class="n">n</span>
+</code></pre></div>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a rel="nofollow" href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a rel="nofollow" href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a rel="nofollow" href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

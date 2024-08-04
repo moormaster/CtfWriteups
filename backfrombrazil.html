@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="generator" content="Pelican" />
+        <title>BackFromBrazil</title>
+        <link rel="stylesheet" href="https://moormaster.github.io/CtfWriteups/theme/css/main.css" />
+        <link href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="CTF writeups Atom Feed" />
+        <meta name="description" content="Given 10 different squares made up of 1000x1000 random numbers you need to input the optimal path from the upper left to the lower right corner..." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://moormaster.github.io/CtfWriteups/">CTF writeups</a></h1>
+                <nav><ul>
+                    <li><a href="/CtfWriteups/category/ctfs.html">CTFs</a></li>
+                    <li><a href="/CtfWriteups/categories.html">Categories</a></li>
+                    <li><a href="/CtfWriteups/tags.html">Tags</a></li>
+                    <li><a href="/CtfWriteups/authors.html">Authors</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="https://moormaster.github.io/CtfWriteups/backfrombrazil.html" rel="bookmark"
+           title="Permalink to BackFromBrazil">BackFromBrazil</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2024-08-04T00:00:00+02:00">
+                Published: So 04 August 2024
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://moormaster.github.io/CtfWriteups/author/moormastergmxnet.html">moormaster@gmx.net</a>
+        </address>
+<p>In <a href="https://moormaster.github.io/CtfWriteups/category/n00bzctf-2024.html">N00bzCtf 2024</a>.</p>
+
+</footer><!-- /.post-info -->      <p>Given 10 different squares made up of 1000x1000 random numbers you need to input the optimal path from the upper left to the lower right corner consisting only of steps d - down or r - right. The sum of all the visited numbers must be maximal.</p>
+<p>An approach using <a href="https://en.wikipedia.org/wiki/Dynamic_programming">dynamic programming</a> can be used to find the optimal path through the square.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">MAX_RUNS</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">DIMENSION</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<span class="c1"># make recursion depth large enough so that width and length of the eggs-square fits in</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">setrecursionlimit</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">DIMENSION</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">getrecursionlimit</span><span class="p">())</span>
+
+<span class="k">def</span> <span class="nf">find_max_path</span><span class="p">(</span><span class="n">eggs</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cached_result</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">cached_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cached_result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="n">cached_result</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cached_result</span><span class="p">[(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)]</span>
+
+    <span class="n">right_result</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">+</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">DIMENSION</span><span class="p">:</span>
+        <span class="n">right_result</span> <span class="o">=</span> <span class="n">find_max_path</span><span class="p">(</span><span class="n">eggs</span><span class="p">,</span> <span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cached_result</span><span class="p">)</span>
+
+    <span class="n">down_result</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">y</span><span class="o">+</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">DIMENSION</span><span class="p">:</span>
+        <span class="n">down_result</span> <span class="o">=</span> <span class="n">find_max_path</span><span class="p">(</span><span class="n">eggs</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">cached_result</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">right_result</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">down_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cached_result</span><span class="p">[(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">eggs</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">x</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">eggs</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">x</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">down_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">right_result</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">down_result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">right_result</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;d&#39;</span> <span class="o">+</span> <span class="n">down_result</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eggs</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="n">down_result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">cached_result</span><span class="p">[(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)]</span> <span class="o">=</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">if</span> <span class="n">right_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">down_result</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">right_result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">down_result</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;r&#39;</span> <span class="o">+</span> <span class="n">right_result</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eggs</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="n">right_result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">cached_result</span><span class="p">[(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)]</span> <span class="o">=</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;backfrombrazil.log&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+
+<span class="n">success</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># read first input for run</span>
+<span class="n">received_reply</span> <span class="o">=</span> <span class="nb">input</span><span class="p">()</span>
+<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt; &quot;</span> <span class="o">+</span> <span class="n">received_reply</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAX_RUNS</span><span class="p">):</span>
+    <span class="n">received_rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">DIMENSION</span><span class="p">):</span>
+        <span class="n">received_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">received_reply</span><span class="p">)</span>
+
+        <span class="n">received_reply</span> <span class="o">=</span> <span class="nb">input</span><span class="p">()</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt; &quot;</span> <span class="o">+</span> <span class="n">received_reply</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">eggs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">received_row</span> <span class="ow">in</span> <span class="n">received_rows</span><span class="p">:</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> 
+            <span class="n">received_row</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">))</span>
+        <span class="n">eggs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+    <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sum_value</span><span class="p">)</span> <span class="o">=</span> <span class="n">find_max_path</span><span class="p">(</span><span class="n">eggs</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;still in brazil&quot;</span> <span class="ow">in</span> <span class="n">received_reply</span> <span class="ow">or</span> <span class="s2">&quot;didn&#39;t find&quot;</span> <span class="ow">in</span> <span class="n">received_reply</span> <span class="ow">or</span> <span class="s2">&quot;out of time&quot;</span> <span class="ow">in</span> <span class="n">received_reply</span><span class="p">:</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">break</span>
+
+    <span class="c1"># read first input for next run</span>
+    <span class="n">received_reply</span> <span class="o">=</span> <span class="nb">input</span><span class="p">()</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt; &quot;</span> <span class="o">+</span> <span class="n">received_reply</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+    <span class="n">received_reply</span> <span class="o">=</span> <span class="nb">input</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">received_reply</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt; &quot;</span> <span class="o">+</span> <span class="n">received_reply</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">received_reply</span> <span class="o">=</span> <span class="nb">input</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">received_reply</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt; &quot;</span> <span class="o">+</span> <span class="n">received_reply</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a rel="nofollow" href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a rel="nofollow" href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a rel="nofollow" href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

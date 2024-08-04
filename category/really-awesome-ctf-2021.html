@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="generator" content="Pelican" />
         <title>CTF writeups - Really Awesome CTF 2021</title>
         <link rel="stylesheet" href="https://moormaster.github.io/CtfWriteups/theme/css/main.css" />
@@ -38,9 +39,9 @@
 
 <p>will be resolved to an image file name 1F600.png. The possible emoji keys that can be used are specified by the emoj.json file.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-    <span class="s2">&quot;grinning_face&quot;</span><span class="o">:</span> <span class="s2">&quot;1F600&quot;</span><span class="p">,</span> 
-    <span class="s2">&quot;grinning_face_with_big_eyes&quot;</span><span class="o">:</span> <span class="s2">&quot;1F603&quot;</span><span class="p">,</span>
-    <span class="p">...</span>
+<span class="w">    </span><span class="s2">&quot;grinning_face&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;1F600&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s2">&quot;grinning_face_with_big_eyes&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;1F603&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">...</span>
 <span class="p">}</span>
 </code></pre></div>
 
@@ -67,7 +68,7 @@
 </code></pre></div>
 
 <p>So a note containing only the grinning_face emoji will be stored as:</p>
-<div class="highlight"><pre><span></span><code><span class="cp">{{</span><span class="m">1F600.</span><span class="nv">png</span><span class="cp">}}</span><span class="x"></span>
+<div class="highlight"><pre><span></span><code><span class="cp">{{</span><span class="m">1F600.</span><span class="nv">png</span><span class="cp">}}</span>
 </code></pre></div>
 
 <p>What we also see in the forms.py is an attempt to prevent the user from manually entering the internally used placeholders.</p>
@@ -79,7 +80,7 @@
 </code></pre></div>
 
 <p>After the replacements of {{, }} and .. happened the result still would be a note containig a placeholder in the internal format pointing to the file containing the flag:</p>
-<div class="highlight"><pre><span></span><code><span class="cp">{{</span><span class="o">/</span><span class="nv">flag.txt</span><span class="cp">}}</span><span class="x"></span>
+<div class="highlight"><pre><span></span><code><span class="cp">{{</span><span class="o">/</span><span class="nv">flag.txt</span><span class="cp">}}</span>
 </code></pre></div>
 
 <p>If we open the note again in the browser we will see an image that cannot be displayed. A quick look at the views.py reveals why:</p>
@@ -120,9 +121,9 @@
 <p>In <a href="https://moormaster.github.io/CtfWriteups/category/really-awesome-ctf-2021.html">Really Awesome CTF 2021</a>.</p>
 
 </footer><!-- /.post-info -->                <p>We are presented with a simple webservice written in go which randomly changes the encryption key every 672 ms and outputs the encrypted flag. However if we analyze the seed that is used to initialize the random number generator ...</p>
-<div class="highlight"><pre><span></span><code><span class="kd">func</span> <span class="nx">changer</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">ticker</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nx">NewTicker</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span> <span class="o">*</span> <span class="mi">672</span><span class="p">).</span><span class="nx">C</span>
-    <span class="k">for</span> <span class="k">range …</span></code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="nx">changer</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ticker</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">NewTicker</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">672</span><span class="p">).</span><span class="nx">C</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="k">range …</span></code></pre></div>
                 <a class="readmore" href="https://moormaster.github.io/CtfWriteups/military-grade.html">read more</a>
                 </div><!-- /.entry-content -->
             </article></li>
@@ -140,10 +141,10 @@
 
         <footer id="contentinfo" class="body">
                 <address id="about" class="vcard body">
-                Proudly powered by <a href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                Proudly powered by <a rel="nofollow" href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a rel="nofollow" href="https://www.python.org/">Python</a>.
                 </address><!-- /#about -->
 
-                <p>The theme is by <a href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+                <p>The theme is by <a rel="nofollow" href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
         </footer><!-- /#contentinfo -->
 
 </body>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="generator" content="Pelican" />
+        <title>Brain</title>
+        <link rel="stylesheet" href="https://moormaster.github.io/CtfWriteups/theme/css/main.css" />
+        <link href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="CTF writeups Atom Feed" />
+        <meta name="description" content="We are presented a string in brainfuck language. The first thing we notice that it is not outputting anything (not a single '.' character in it)...." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://moormaster.github.io/CtfWriteups/">CTF writeups</a></h1>
+                <nav><ul>
+                    <li><a href="/CtfWriteups/category/ctfs.html">CTFs</a></li>
+                    <li><a href="/CtfWriteups/categories.html">Categories</a></li>
+                    <li><a href="/CtfWriteups/tags.html">Tags</a></li>
+                    <li><a href="/CtfWriteups/authors.html">Authors</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="https://moormaster.github.io/CtfWriteups/brain.html" rel="bookmark"
+           title="Permalink to Brain">Brain</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2024-08-04T00:00:00+02:00">
+                Published: So 04 August 2024
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://moormaster.github.io/CtfWriteups/author/moormastergmxnet.html">moormaster@gmx.net</a>
+        </address>
+<p>In <a href="https://moormaster.github.io/CtfWriteups/category/n00bzctf-2024.html">N00bzCtf 2024</a>.</p>
+
+</footer><!-- /.post-info -->      <p>We are presented a string in <a href="https://en.wikipedia.org/wiki/Brainfuck">brainfuck</a> language. The first thing we notice that it is not outputting anything (not a single '.' character in it).</p>
+<div class="highlight"><pre><span></span><code><span class="nv">&gt;</span><span class="nb">+++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++++++++++++++++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+<span class="nv">&gt;</span><span class="nb">+++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span><span class="nv">&gt;</span><span class="nb">+++++++++++++++++++++++++</span><span class="k">[</span><span class="nv">&lt;</span><span class="nb">+++++</span><span class="nv">&gt;</span><span class="nb">-</span><span class="k">]</span><span class="nv">&lt;</span><span class="k">[</span><span class="nb">-</span><span class="k">]</span>
+</code></pre></div>
+
+<p>The next thing that jumps into ones eye are these <code>&lt;[-]</code>. The <code>&lt;</code> jumps right back into the previous memory cell while <code>[-]</code> is equal to</p>
+<div class="highlight"><pre><span></span><code><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">cell_value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">cell_value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">--</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>and causes whatever value was written into that cell before to be decreased to 0 again.</p>
+<p>Since we are curious we want to output each of these values before they get neutralized again. So our task here is to simply insert a <code>.</code> command into each of the <code>&lt;[-]</code> commands:  <code>&lt;.[-]</code></p>
+<p>Putting the resulting <code>brainfuck</code> code into a brainfuck interpreter will now give us the flag.</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://moormaster.github.io/CtfWriteups/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a rel="nofollow" href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a rel="nofollow" href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a rel="nofollow" href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
