@@ -20,15 +20,12 @@ LINKS = ()
 
 DISPLAY_CATEGORIES_ON_MENU=False
 
-MENUITEMS = ()
-def set_menuitems(site_url):
-    global MENUITEMS
-    MENUITEMS = (('CTFs', f'{site_url}/category/ctfs.html'),
+def get_menuitems(site_url):
+    return (     ('CTFs', f'{site_url}/category/ctfs.html'),
                  ('Categories', f'{site_url}/categories.html'),
                  ('Tags', f'{site_url}/tags.html'),
                  ('Authors', f'{site_url}/authors.html'),)
-
-set_menuitems(SITEURL)
+MENUITEMS = get_menuitems(SITEURL)
 
 # Social widget
 SOCIAL = ()
