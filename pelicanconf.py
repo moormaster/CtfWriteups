@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*- #
-
 AUTHOR = 'moormaster'
 SITENAME = 'CTF writeups'
-SITEURL = ''
+SITEURL = ""
 
-PATH = 'content'
+PATH = "content"
 
 TIMEZONE = 'Europe/Berlin'
 
@@ -22,10 +19,16 @@ AUTHOR_FEED_RSS = None
 LINKS = ()
 
 DISPLAY_CATEGORIES_ON_MENU=False
-MENUITEMS = (('CTFs', '/category/ctfs.html'),
-             ('Categories', '/categories.html'),
-             ('Tags', '/tags.html'),
-             ('Authors', '/authors.html'),)
+
+MENUITEMS = ()
+def set_menuitems(site_url):
+    global MENUITEMS
+    MENUITEMS = (('CTFs', f'{site_url}/category/ctfs.html'),
+                 ('Categories', f'{site_url}/categories.html'),
+                 ('Tags', f'{site_url}/tags.html'),
+                 ('Authors', f'{site_url}/authors.html'),)
+
+set_menuitems(SITEURL)
 
 # Social widget
 SOCIAL = ()
@@ -33,4 +36,4 @@ SOCIAL = ()
 DEFAULT_PAGINATION = 10
 
 # Uncomment following line if you want document-relative URLs when developing
-#RELATIVE_URLS = True
+# RELATIVE_URLS = True
